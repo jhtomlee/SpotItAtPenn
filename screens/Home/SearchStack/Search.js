@@ -3,6 +3,7 @@ import { StyleSheet, SafeAreaView, FlatList, View, Button, Text, Picker } from '
 import { ListItem, Overlay, Icon, SearchBar } from 'react-native-elements'
 import firebase from 'firebase';
 import { eventsDB } from '../../../src/db'
+import moment from 'moment';
 
 export default class Search extends React.Component {
   static navigationOptions = ({ navigation }) => {
@@ -50,6 +51,9 @@ export default class Search extends React.Component {
         querySnapshot.forEach((doc) => {
           const eventElement = doc;
           this.eventsData.push(eventElement)
+          this.eventsData.sort((a, b) => {
+            return a.data().time - b.data().time;
+          });
         });
       })
       .catch((error) => {
@@ -99,11 +103,12 @@ export default class Search extends React.Component {
    */
   _renderRow = (item) => {
     const element = item.item.data()
+    const dateString = moment.unix(element.time).format("YYYY-MM-DD HH:mm");
     return (
       <ListItem
         title={element.title}
         titleStyle={{ fontSize: 16, color: 'black' }}
-        subtitle={element.host}
+        subtitle={`${element.host}\n${dateString}`}
         subtitleStyle={{ fontSize: 14, color: 'dimgrey' }}
       // onPress={() => this._toggleEventDetails(element, item.item.id)}
       />

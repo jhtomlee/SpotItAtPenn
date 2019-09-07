@@ -2,7 +2,9 @@ import React from 'react';
 import { StyleSheet, SafeAreaView, AsyncStorage, FlatList, Linking, View, TouchableWithoutFeedback, ScrollView, Text } from 'react-native';
 import { ListItem, Overlay, Icon } from 'react-native-elements'
 import firebase from 'firebase';
-import {eventsDB} from '../../../src/db'
+import { eventsDB } from '../../../src/db'
+import moment from 'moment';
+
 
 export default class Discover extends React.Component {
   static navigationOptions = ({ navigation }) => {
@@ -44,6 +46,9 @@ export default class Discover extends React.Component {
             const eventElement = doc;
             const eventsData = this.state.eventsData;
             eventsData.push(eventElement)
+            eventsData.sort((a, b) => {
+              return a.data().time - b.data().time;
+            });
             this.setState({ eventsData })
           });
         })
@@ -55,11 +60,13 @@ export default class Discover extends React.Component {
 
   _renderRow = item => {
     const element = item.item.data()
+    const dateString = moment.unix(element.time).format("YYYY-MM-DD HH:mm");
+    
     return (
       <ListItem
         title={element.title}
         titleStyle={{ fontSize: 16, color: 'black' }}
-        subtitle={element.host}
+        subtitle={`${element.host}\n${dateString}`}
         subtitleStyle={{ fontSize: 14, color: 'dimgrey' }}
         onPress={() => this._toggleEventDetails(element, item.item.id)}
 
@@ -146,7 +153,7 @@ export default class Discover extends React.Component {
                 // textAlign: 'justify',
               }}
             >
-              {`When? \n${this.state.pressedItem.time}`}
+              {`When? \n${ moment.unix(this.state.pressedItem.time).format("YYYY-MM-DD HH:mm")}`}
             </Text>
 
             <Text

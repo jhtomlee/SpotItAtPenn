@@ -14,9 +14,9 @@ firebase.initializeApp(firebaseConfig);
 
 //Top main navigator
 const AppNavigator = createSwitchNavigator({
-  Login: LoginMain, 
+  LogInMain: LoginMain, 
   Loading: LoginLoading,
-  Home: HomeMain,   
+  HomeMain: HomeMain,   
 }, {
     initialRouteName: 'Loading',
   })

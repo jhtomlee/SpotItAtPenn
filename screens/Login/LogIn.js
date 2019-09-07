@@ -26,7 +26,7 @@ export default class LogIn extends React.Component {
       }).catch(function (error) {
         console.log("Error updating document: ", error);
       });
-      this.props.navigation.navigate('Home');
+      this.props.navigation.navigate('Loading');
 
     } catch (error) {
       alert(error.toString());

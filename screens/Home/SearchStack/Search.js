@@ -73,6 +73,21 @@ export default class Search extends React.Component {
         return itemData.indexOf(textData) > -1;
       });
       this.setState({ searchResult: newData });
+    } else if (method == 'Categories'){
+      this.setState({ searchInput });
+      const newData = this.eventsData.filter(item => {
+        const textData = searchInput.toUpperCase();
+        const itemKeywords = item.data().keywords
+
+        let included = false;
+        itemKeywords.map(item => {
+          const itemData = item.toUpperCase();
+          if (itemData.indexOf(textData) > -1) included =true;
+        })
+        return included;
+      });
+      this.setState({ searchResult: newData });
+
     }
   }
   _showFilter = () => {
@@ -125,6 +140,7 @@ export default class Search extends React.Component {
           >
             <Picker.Item label="Title" value="Title" />
             <Picker.Item label="Host" value="Host" />
+            <Picker.Item label="Categories" value="Categories" />
           </Picker>
         </View>
 

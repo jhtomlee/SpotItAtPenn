@@ -82,44 +82,10 @@ export default class Discover extends React.Component {
     })
   }
 
-  _renderRow = item => {
-    const element = item.item.data()
-    const eventId = item.item.id
-    const dateString = moment.unix(element.time).format("YYYY-MM-DD HH:mm");
-
-    return (
-      <ListItem
-        title={element.title}
-        titleStyle={{ fontSize: 16, color: 'black' }}
-        subtitle={`${element.host}\n${dateString}`}
-        subtitleStyle={{ fontSize: 14, color: 'dimgrey' }}
-        onPress={() => this._toggleEventDetails(element, item.item.id)}
-        rightIcon={
-          <View style={{flexDirection: 'row'}}>
-            <Icon
-              name={
-                this.likedEvent.has(eventId) ? 'heart' : 'heart-outline'
-              }
-              type="material-community"
-              size={25}
-              iconStyle={
-                this.likedEvent.has(eventId)
-                  ? { color: 'red', }
-                  : { color: '#a9a9a9' }
-              }
-              onPress={() => this._likedAction(this.state.userId, item.item.id)}
-
-            />
-            <Text>  x {this.likesCounts[eventId]}</Text>
-          </View>
-        }
-
-      />
-    );
-  };
   _likedAction = async (userId, eventId) => {
     const db = await firebase.firestore();
     if (!this.likedEvent.has(eventId)) {
+      //event database
       const increment = firebase.firestore.FieldValue.increment(1);
       db.collection(eventsDB).doc(eventId).update({
         likedBy: firebase.firestore.FieldValue.arrayUnion(userId),
@@ -128,10 +94,17 @@ export default class Discover extends React.Component {
         console.log("Error updating document: ", error);
       });
       this.likedEvent.add(eventId)
-      const count = this.likesCounts[eventId] 
+      const count = this.likesCounts[eventId]
       this.likesCounts[eventId] = count + 1;
+
+      //userDB
+      db.collection(usersDB).doc(this.state.userId).update({
+        likedEvents: firebase.firestore.FieldValue.arrayUnion(eventId),
+      }).catch(function (error) {
+        console.log("Error updating document: ", error);
+      });
     } else {
-    
+      //event database
       const decrement = firebase.firestore.FieldValue.increment(-1);
       db.collection(eventsDB).doc(eventId).update({
         likedBy: firebase.firestore.FieldValue.arrayRemove(userId),
@@ -140,14 +113,20 @@ export default class Discover extends React.Component {
         console.log("Error updating document: ", error);
       });
       this.likedEvent.delete(eventId)
-      const count = this.likesCounts[eventId] 
+      const count = this.likesCounts[eventId]
       this.likesCounts[eventId] = count - 1;
+
+      //userDB
+      db.collection(usersDB).doc(this.state.userId).update({
+        likedEvents: firebase.firestore.FieldValue.arrayRemove(eventId),
+      }).catch(function (error) {
+        console.log("Error updating document: ", error);
+      });
     }
     const { toggle } = this.state;
     this.setState({ toggle: !toggle });
 
   }
-
   _toggleEventDetails = (item, id) => {
     const { eventOverlayVisible } = this.state;
     this.setState({ eventOverlayVisible: !eventOverlayVisible });
@@ -158,6 +137,9 @@ export default class Discover extends React.Component {
 
 
 
+  /**
+   * Render
+   */
   renderEventOverlay = () => {
     return (
       <Overlay
@@ -172,7 +154,7 @@ export default class Discover extends React.Component {
             showsVerticalScrollIndicator="false"
           >
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row',alignItems: 'center', justifyContent: 'space-between' }}>
               <TouchableWithoutFeedback
                 onPress={() => {
                   this.setState({ eventOverlayVisible: false })
@@ -186,6 +168,7 @@ export default class Discover extends React.Component {
                   color="#2bb5bc"
                 />
               </TouchableWithoutFeedback>
+              <View style ={{paddingRight: 20}}>
               <Text
                 style={{
                   paddingTop: 30,
@@ -196,7 +179,8 @@ export default class Discover extends React.Component {
               >
                 {this.state.pressedItem.title}
               </Text>
-              <Text>{}</Text>
+              </View>
+              <Text>    </Text>
             </View>
 
             {this.state.pressedItem.host ?
@@ -333,7 +317,19 @@ export default class Discover extends React.Component {
                   </Text>
                 </View>
               </TouchableWithoutFeedback> : <View></View>}
-
+            <Icon
+              name={
+                this.likedEvent.has(this.state.pressedItemId) ? 'heart' : 'heart-outline'
+              }
+              type="material-community"
+              size={25}
+              iconStyle={
+                this.likedEvent.has(this.state.pressedItemId)
+                  ? { color: 'red', }
+                  : { color: '#a9a9a9' }
+              }
+              onPress={() => this._likedAction(this.state.userId, this.state.pressedItemId)}
+            />
           </ScrollView>
         ) : (
             <View></View>
@@ -341,7 +337,41 @@ export default class Discover extends React.Component {
       </Overlay>
     )
   }
+  _renderRow = item => {
+    const element = item.item.data()
+    const eventId = item.item.id
+    const dateString = moment.unix(element.time).format("YYYY-MM-DD HH:mm");
 
+    return (
+      <ListItem
+        title={element.title}
+        titleStyle={{ fontSize: 16, color: 'black' }}
+        subtitle={`${element.host}\n${dateString}`}
+        subtitleStyle={{ fontSize: 14, color: 'dimgrey' }}
+        onPress={() => this._toggleEventDetails(element, item.item.id)}
+        rightIcon={
+          <View style={{ flexDirection: 'row' }}>
+            <Icon
+              name={
+                this.likedEvent.has(eventId) ? 'heart' : 'heart-outline'
+              }
+              type="material-community"
+              size={25}
+              iconStyle={
+                this.likedEvent.has(eventId)
+                  ? { color: 'red', }
+                  : { color: '#a9a9a9' }
+              }
+              onPress={() => this._likedAction(this.state.userId, item.item.id)}
+
+            />
+            <Text>  x {this.likesCounts[eventId]}</Text>
+          </View>
+        }
+
+      />
+    );
+  };
   render() {
     return (
       <SafeAreaView style={styles.container}>

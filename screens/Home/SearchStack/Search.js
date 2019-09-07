@@ -1,8 +1,8 @@
 import React from 'react';
-import { StyleSheet, SafeAreaView, FlatList, View, TouchableWithoutFeedback, Text, Linking, Picker, ScrollView } from 'react-native';
+import { StyleSheet, SafeAreaView, FlatList, AsyncStorage, View, TouchableWithoutFeedback, Text, Linking, Picker, ScrollView } from 'react-native';
 import { ListItem, Overlay, Icon, SearchBar } from 'react-native-elements'
 import firebase from 'firebase';
-import { eventsDB } from '../../../src/db'
+import { eventsDB, usersDB } from '../../../src/db'
 import moment from 'moment';
 
 export default class Search extends React.Component {
@@ -27,18 +27,25 @@ export default class Search extends React.Component {
 
     super(props);
     this.eventsData = []
+    this.likedEvent = new Set();
+    this.likesCounts = {};
     this.state = {
+      userId: null,
       searchResult: [],
       searchInput: '',
       searchMethod: 'Title',
       methodOverlayVisible: false,
-      eventOverlayVisible: false, 
+      eventOverlayVisible: false,
       pressedItem: null,
       pressedItemId: null,
     };
   }
 
   async componentDidMount() {
+    if (!this.state.userId) {
+      const userId = await AsyncStorage.getItem('userId');
+      this.setState({ userId })
+    }
     this.props.navigation.setParams({
       handleHeaderRight: this._showFilter,
     });
@@ -100,12 +107,90 @@ export default class Search extends React.Component {
   _showFilter = () => {
     this.setState({ methodOverlayVisible: true })
   }
-  _toggleEventDetails = (item, id) => {
+  _toggleEventDetails = async (item, id) => {
     const { eventOverlayVisible } = this.state;
     this.setState({ eventOverlayVisible: !eventOverlayVisible });
     this.setState({ pressedItem: item });
     this.setState({ pressedItemId: id });
+
+    //fetch event likes info
+    const db = await firebase.firestore();
+    db.collection(eventsDB).doc(id).get()
+      .then((doc) => {
+
+        if (doc.exists) {
+          const eventElement = doc;
+
+          //store like counts
+          this.likesCounts[doc.id] = eventElement.data().likesCount
+
+          //store liked events by user
+          const nose = eventElement.data().likedBy
+          if (nose && nose.length > 0) {
+            nose.map((id) => {
+              if (id === this.state.userId) {
+                this.likedEvent.add(doc.id)
+
+              }
+            })
+          }
+          const { toggle } = this.state;
+          this.setState({ toggle: !toggle });
+
+          console.log("Document data:", doc.data());
+        } else {
+          // doc.data() will be undefined in this case
+          console.log("No such document!");
+        }
+      }).catch((error) => {
+        console.log("Error getting document:", error);
+      });
   };
+  _likedAction = async (userId, eventId) => {
+    const db = await firebase.firestore();
+    if (!this.likedEvent.has(eventId)) {
+      //event database
+      const increment = firebase.firestore.FieldValue.increment(1);
+      db.collection(eventsDB).doc(eventId).update({
+        likedBy: firebase.firestore.FieldValue.arrayUnion(userId),
+        likesCount: increment
+      }).catch(function (error) {
+        console.log("Error updating document: ", error);
+      });
+      this.likedEvent.add(eventId)
+      const count = this.likesCounts[eventId]
+      this.likesCounts[eventId] = count + 1;
+
+      //userDB
+      db.collection(usersDB).doc(this.state.userId).update({
+        likedEvents: firebase.firestore.FieldValue.arrayUnion(eventId),
+      }).catch(function (error) {
+        console.log("Error updating document: ", error);
+      });
+    } else {
+      //event database
+      const decrement = firebase.firestore.FieldValue.increment(-1);
+      db.collection(eventsDB).doc(eventId).update({
+        likedBy: firebase.firestore.FieldValue.arrayRemove(userId),
+        likesCount: decrement
+      }).catch(function (error) {
+        console.log("Error updating document: ", error);
+      });
+      this.likedEvent.delete(eventId)
+      const count = this.likesCounts[eventId]
+      this.likesCounts[eventId] = count - 1;
+
+      //userDB
+      db.collection(usersDB).doc(this.state.userId).update({
+        likedEvents: firebase.firestore.FieldValue.arrayRemove(eventId),
+      }).catch(function (error) {
+        console.log("Error updating document: ", error);
+      });
+    }
+    const { toggle } = this.state;
+    this.setState({ toggle: !toggle });
+
+  }
 
   /**
    * Render
@@ -190,17 +275,21 @@ export default class Search extends React.Component {
                   color="#2bb5bc"
                 />
               </TouchableWithoutFeedback>
-              <Text
-                style={{
-                  paddingTop: 30,
-                  color: 'black',
-                  fontWeight: 'bold',
-                  fontSize: 18,
-                }}
-              >
-                {this.state.pressedItem.title}
-              </Text>
-              <Text>{}</Text>
+              <View style={{ paddingRight: 30 }}>
+                <Text
+                  style={{
+                    paddingTop: 30,
+                    color: 'black',
+                    fontWeight: 'bold',
+                    fontSize: 18,
+                  }}
+                >
+                  {this.state.pressedItem.title}
+                </Text>
+              </View>
+              <View>
+                <Text>{}</Text>
+              </View>
             </View>
 
             {this.state.pressedItem.host ?
@@ -338,6 +427,22 @@ export default class Search extends React.Component {
                 </View>
               </TouchableWithoutFeedback> : <View></View>}
 
+            <View style={{ justifyContent: 'center',alignItems: 'center',flexDirection: 'row' }}>
+              <Icon
+                name={
+                  this.likedEvent.has(this.state.pressedItemId) ? 'heart' : 'heart-outline'
+                }
+                type="material-community"
+                size={25}
+                iconStyle={
+                  this.likedEvent.has(this.state.pressedItemId)
+                    ? { color: 'red', }
+                    : { color: '#a9a9a9' }
+                }
+                onPress={() => this._likedAction(this.state.userId, this.state.pressedItemId)}
+              />
+              <Text>  x {this.likesCounts[this.state.pressedItemId]}</Text>
+            </View>
           </ScrollView>
         ) : (
             <View></View>

@@ -71,6 +71,7 @@ export const HomeMain = createBottomTabNavigator(
   },
   {
     tabBarOptions: {
+      showLabel: false,
       activeTintColor: '#a41034',
       inactiveTintColor: 'gray',
     },

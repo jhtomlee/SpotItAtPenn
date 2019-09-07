@@ -2,33 +2,29 @@ import React from 'react';
 import { StyleSheet, SafeAreaView, AsyncStorage, FlatList, Linking, View, TouchableWithoutFeedback, ScrollView, Text } from 'react-native';
 import { ListItem, Overlay, Icon } from 'react-native-elements'
 import firebase from 'firebase';
+import {eventsDB} from '../../../src/db'
 
 export default class Discover extends React.Component {
   static navigationOptions = ({ navigation }) => {
     return {
       headerTitle: "Discover",
       headerTintColor: '#2bb5bc',
-      headerStyle: {
-        // backgroundColor: '#e8e8e8',
-        borderBottomWidth: 0,
-      },
     }
   }
   constructor(props) {
     super(props);
-    this.selected = new Set();
     this.state = {
       subscribedInterests: [],
       eventsData: [],
       eventOverlayVisible: false,
-      pressedItem: null
+      pressedItem: null,
+      pressedItemId: null
     };
   }
 
   async componentDidMount() {
     if (this.state.subscribedInterests.length === 0) {
       const subscribedInterestsArray = await AsyncStorage.getItem('subscribedInterestsArray');
-      console.warn(subscribedInterestsArray)
       const subscribedInterests = JSON.parse(subscribedInterestsArray)
       this.setState({ subscribedInterests })
     }
@@ -37,7 +33,7 @@ export default class Discover extends React.Component {
 
   fetchEvents = async () => {
     const db = await firebase.firestore();
-    const eventsRef = await db.collection("events");
+    const eventsRef = await db.collection(eventsDB);
 
     this.state.subscribedInterests.map(async (interest) => {
       const query = await eventsRef.where("keywords", "array-contains", interest)
@@ -45,7 +41,7 @@ export default class Discover extends React.Component {
         .get()
         .then((querySnapshot) => {
           querySnapshot.forEach((doc) => {
-            const eventElement = doc.data();
+            const eventElement = doc;
             const eventsData = this.state.eventsData;
             eventsData.push(eventElement)
             this.setState({ eventsData })
@@ -58,22 +54,24 @@ export default class Discover extends React.Component {
   }
 
   _renderRow = item => {
+    const element = item.item.data()
     return (
       <ListItem
-        title={item.item.title}
+        title={element.title}
         titleStyle={{ fontSize: 16, color: 'black' }}
-        subtitle={item.item.host}
+        subtitle={element.host}
         subtitleStyle={{ fontSize: 14, color: 'dimgrey' }}
-        onPress={() => this._toggleEventDetails(item.item)}
+        onPress={() => this._toggleEventDetails(element, item.item.id)}
 
       />
     );
   };
 
-  _toggleEventDetails = item => {
+  _toggleEventDetails = (item, id) => {
     const { eventOverlayVisible } = this.state;
     this.setState({ eventOverlayVisible: !eventOverlayVisible });
     this.setState({ pressedItem: item });
+    this.setState({ pressedItemId: id });
   };
 
 

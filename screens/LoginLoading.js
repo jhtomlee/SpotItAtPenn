@@ -62,7 +62,6 @@ export default class LoginLoadingScreen extends Component {
         } else {
 
           const stringfiedArray = JSON.stringify(subscribedInterests)
-          console.warn(stringfiedArray)
           await AsyncStorage.setItem('subscribedInterestsArray', stringfiedArray);
 
           const { navigate } = this.props.navigation;

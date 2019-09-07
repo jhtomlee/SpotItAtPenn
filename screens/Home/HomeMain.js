@@ -1,37 +1,78 @@
 import React from 'react';
-import {createBottomTabNavigator,} from 'react-navigation-tabs'
+import { createBottomTabNavigator, } from 'react-navigation-tabs'
+import { createStackNavigator } from "react-navigation-stack";
 import Ionicons from 'react-native-vector-icons/Ionicons'
 
-import Discover from "./Discover";
-import Search from "./Search";
-import Schedule from "./Schedule";
+import Discover from "./DiscoverStack/Discover";
+import Search from "./SearchStack/Search";
+import Schedule from "./ScheduleStack/Schedule";
+
+const DiscoverStack = createStackNavigator({
+  Discover: Discover,
+});
+DiscoverStack.navigationOptions = ({ navigation }) => {
+  let tabBarVisible = true;
+  if (navigation.state.index > 0) {
+    tabBarVisible = false;
+  }
+  return {
+    tabBarVisible,
+  };
+};
+
+const SearchStack = createStackNavigator({
+  Search: Search,
+});
+SearchStack.navigationOptions = ({ navigation }) => {
+  let tabBarVisible = true;
+  if (navigation.state.index > 0) {
+    tabBarVisible = false;
+  }
+  return {
+    tabBarVisible,
+  };
+};
+
+const ScheduleStack = createStackNavigator({
+  Schedule: Schedule,
+});
+ScheduleStack.navigationOptions = ({ navigation }) => {
+  let tabBarVisible = true;
+  if (navigation.state.index > 0) {
+    tabBarVisible = false;
+  }
+  return {
+    tabBarVisible,
+  };
+};
+
 
 export const HomeMain = createBottomTabNavigator(
-    {
-    Discover: Discover,
-    Search: Search,
-    Schedule: Schedule,
-    }, 
-    {
-    defaultNavigationOptions: ({navigation}) => ({
-      tabBarIcon: ({focused, tintColor}) => {
-        const{ routeName} = navigation.state;
+  {
+    DiscoverStack: DiscoverStack,
+    SearchStack: SearchStack,
+    ScheduleStack: ScheduleStack,
+  },
+  {
+    defaultNavigationOptions: ({ navigation }) => ({
+      tabBarIcon: ({ focused, tintColor }) => {
+        const { routeName } = navigation.state;
         let iconName;
-        if (routeName==='Discover'){
+        if (routeName === 'DiscoverStack') {
           iconName = `ios-home`
-        } else if (routeName==='Search'){
+        } else if (routeName === 'SearchStack') {
           iconName = `ios-search`
-        } else if (routeName==='Schedule'){
+        } else if (routeName === 'ScheduleStack') {
           iconName = `ios-contact`
         }
-        return <Ionicons name ={iconName} size={25} color={tintColor} />
-        }
+        return <Ionicons name={iconName} size={25} color={tintColor} />
+      }
     })
+  },
+  {
+    tabBarOptions: {
+      activeTintColor: '#a41034',
+      inactiveTintColor: 'gray',
     },
-    {
-      tabBarOptions: {
-        activeTintColor: '#a41034',
-        inactiveTintColor: 'gray',
-      },
-    }
-  )
+  }
+)

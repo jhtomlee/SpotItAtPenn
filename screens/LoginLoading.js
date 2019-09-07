@@ -60,6 +60,11 @@ export default class LoginLoadingScreen extends Component {
           });
           this.props.navigation.dispatch(resetAction);
         } else {
+
+          const stringfiedArray = JSON.stringify(subscribedInterests)
+          console.warn(stringfiedArray)
+          await AsyncStorage.setItem('subscribedInterestsArray', stringfiedArray);
+
           const { navigate } = this.props.navigation;
           setTimeout(() => {
             if (this.unsubscribe) this.unsubscribe();

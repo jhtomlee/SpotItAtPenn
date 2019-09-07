@@ -23,7 +23,7 @@ export default class Interets extends React.Component {
     super(props);
     this.selected = new Set();
     this.state = {
-      interestsData: ["sports", "career", "food", "cultural", "freshman", "study"]
+      interestsData: ["sports", "career", "food", "cultural", "freshman", "study", "testing"]
     };
   }
 

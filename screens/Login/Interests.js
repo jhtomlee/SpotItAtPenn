@@ -2,7 +2,7 @@ import React from 'react'
 import { StyleSheet, Text, FlatList, TouchableOpacity, AsyncStorage } from 'react-native'
 import { ListItem } from 'react-native-elements'
 import { SafeAreaView } from 'react-navigation';
-import { usersDB } from '../../src/db'
+import { keywordsDB, usersDB } from '../../src/db'
 import * as firebase from 'firebase';
 
 
@@ -23,11 +23,20 @@ export default class Interets extends React.Component {
     super(props);
     this.selected = new Set();
     this.state = {
-      interestsData: ["sports", "career", "food", "cultural", "freshman", "study", "testing"]
+      interestsData: []
     };
   }
 
   // methods
+  async componentDidMount() {
+    const db = await firebase.firestore();
+    const doc = await db.collection(keywordsDB).doc('keywords').get();
+    const {
+      keywords
+    } = doc.data();
+    keywords.sort();
+    this.setState({interestsData:keywords})
+  }
   _renderRow = item => {
     const interest = item.item;
     return (

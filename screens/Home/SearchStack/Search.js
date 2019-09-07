@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, SafeAreaView, FlatList, View, Button, Text, Picker } from 'react-native';
+import { StyleSheet, SafeAreaView, FlatList, View, TouchableWithoutFeedback, Text, Linking, Picker, ScrollView } from 'react-native';
 import { ListItem, Overlay, Icon, SearchBar } from 'react-native-elements'
 import firebase from 'firebase';
 import { eventsDB } from '../../../src/db'
@@ -32,6 +32,9 @@ export default class Search extends React.Component {
       searchInput: '',
       searchMethod: 'Title',
       methodOverlayVisible: false,
+      eventOverlayVisible: false, 
+      pressedItem: null,
+      pressedItemId: null,
     };
   }
 
@@ -77,7 +80,7 @@ export default class Search extends React.Component {
         return itemData.indexOf(textData) > -1;
       });
       this.setState({ searchResult: newData });
-    } else if (method == 'Categories'){
+    } else if (method == 'Categories') {
       this.setState({ searchInput });
       const newData = this.eventsData.filter(item => {
         const textData = searchInput.toUpperCase();
@@ -86,7 +89,7 @@ export default class Search extends React.Component {
         let included = false;
         itemKeywords.map(item => {
           const itemData = item.toUpperCase();
-          if (itemData.indexOf(textData) > -1) included =true;
+          if (itemData.indexOf(textData) > -1) included = true;
         })
         return included;
       });
@@ -97,6 +100,12 @@ export default class Search extends React.Component {
   _showFilter = () => {
     this.setState({ methodOverlayVisible: true })
   }
+  _toggleEventDetails = (item, id) => {
+    const { eventOverlayVisible } = this.state;
+    this.setState({ eventOverlayVisible: !eventOverlayVisible });
+    this.setState({ pressedItem: item });
+    this.setState({ pressedItemId: id });
+  };
 
   /**
    * Render
@@ -110,7 +119,7 @@ export default class Search extends React.Component {
         titleStyle={{ fontSize: 16, color: 'black' }}
         subtitle={`${element.host}\n${dateString}`}
         subtitleStyle={{ fontSize: 14, color: 'dimgrey' }}
-      // onPress={() => this._toggleEventDetails(element, item.item.id)}
+        onPress={() => this._toggleEventDetails(element, item.item.id)}
       />
     );
 
@@ -139,7 +148,6 @@ export default class Search extends React.Component {
           </View>
 
           <Picker
-            // style={styles.picker} itemStyle={styles.pickerItem}
             selectedValue={this.state.searchMethod}
             onValueChange={(itemValue) => this.setState({ searchMethod: itemValue })}
           >
@@ -154,10 +162,194 @@ export default class Search extends React.Component {
     )
 
   }
+  renderEventOverlay = () => {
+    return (
+      <Overlay
+        isVisible={this.state.eventOverlayVisible}
+        onBackdropPress={() => this.setState({ eventOverlayVisible: false })}
+        fullScreen
+      >
+
+        {this.state.pressedItem ? (
+          <ScrollView
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator="false"
+          >
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <TouchableWithoutFeedback
+                onPress={() => {
+                  this.setState({ eventOverlayVisible: false })
+
+                }}
+              >
+                <Icon
+                  containerStyle={{ paddingTop: 30, }}
+                  name="chevron-left"
+                  size={32}
+                  color="#2bb5bc"
+                />
+              </TouchableWithoutFeedback>
+              <Text
+                style={{
+                  paddingTop: 30,
+                  color: 'black',
+                  fontWeight: 'bold',
+                  fontSize: 18,
+                }}
+              >
+                {this.state.pressedItem.title}
+              </Text>
+              <Text>{}</Text>
+            </View>
+
+            {this.state.pressedItem.host ?
+              <View style={{ alignItems: 'center' }}>
+                <Text
+                  style={{
+                    color: 'dimgrey',
+                    fontSize: 16,
+                    paddingTop: 0,
+                    paddingBottom: 20,
+                    paddingLeft: 15,
+                    paddingRight: 15,
+                    textAlign: 'justify',
+                  }}
+                >{`${this.state.pressedItem.host}`}</Text>
+              </View>
+              : <View></View>}
+
+            {this.state.pressedItem.time ?
+              <Text
+                style={{
+                  paddingLeft: 15,
+                  paddingRight: 20,
+                  paddingBottom: 20,
+                  fontSize: 14,
+                  color: 'grey',
+                  // textAlign: 'justify',
+                }}
+              >
+                {`When? \n${moment.unix(this.state.pressedItem.time).format("YYYY-MM-DD HH:mm")}`}
+              </Text>
+              : <View></View>}
+
+            {this.state.pressedItem.location ?
+              <Text
+                style={{
+                  paddingLeft: 15,
+                  paddingRight: 20,
+                  paddingBottom: 20,
+                  fontSize: 14,
+                  color: 'grey',
+                  // textAlign: 'justify',
+                }}
+              >
+                {`Where? \n${this.state.pressedItem.location}`}
+              </Text>
+              : <View></View>}
+
+            {this.state.pressedItem.summary ?
+              <Text
+                style={{
+                  paddingLeft: 15,
+                  paddingRight: 20,
+                  paddingBottom: 20,
+                  fontSize: 14,
+                  color: 'grey',
+                  // textAlign: 'justify',
+                }}
+              >
+                {`What?: \n${this.state.pressedItem.summary}`}
+              </Text>
+              : <View></View>}
+
+            {this.state.pressedItem.cost ?
+              <Text
+                style={{
+                  paddingLeft: 15,
+                  paddingRight: 20,
+                  paddingBottom: 20,
+                  fontSize: 14,
+                  color: 'grey',
+                  // textAlign: 'justify',
+                }}
+              >
+                {`cost: ${this.state.pressedItem.cost}`}
+              </Text> : <View></View>}
+
+            {this.state.pressedItem.registrationSite ?
+              <TouchableWithoutFeedback
+                onPress={() => {
+                  Linking.openURL(this.state.pressedItem.registrationSite);
+                }}
+              >
+                <View>
+                  <Text
+                    style={{
+                      paddingLeft: 15,
+                      paddingRight: 20,
+                      fontSize: 14,
+                      color: 'grey',
+                    }}
+                  >Website:
+                </Text>
+                  <Text
+                    style={{
+                      paddingLeft: 15,
+                      paddingRight: 20,
+                      paddingBottom: 20,
+                      fontSize: 14,
+                      color: 'blue',
+                    }}
+                  >
+                    {`${this.state.pressedItem.registrationSite}`}
+                  </Text>
+                </View>
+              </TouchableWithoutFeedback> : <View></View>}
+
+            {this.state.pressedItem.websiteSource ?
+              <TouchableWithoutFeedback
+                onPress={() => {
+                  Linking.openURL(this.state.pressedItem.websiteSource);
+                }}
+              >
+                <View>
+                  <Text
+                    style={{
+                      paddingLeft: 15,
+                      paddingRight: 20,
+                      fontSize: 14,
+                      color: 'grey',
+                    }}
+                  >Website:
+                </Text>
+                  <Text
+                    style={{
+                      paddingLeft: 15,
+                      paddingRight: 20,
+                      paddingBottom: 20,
+                      fontSize: 14,
+                      color: 'blue',
+                    }}
+                  >
+                    {`${this.state.pressedItem.websiteSource}`}
+                  </Text>
+                </View>
+              </TouchableWithoutFeedback> : <View></View>}
+
+          </ScrollView>
+        ) : (
+            <View></View>
+          )}
+      </Overlay>
+    )
+  }
   render() {
     return (
       <SafeAreaView style={styles.container}>
         {this.renderSearchMethod()}
+        {this.renderEventOverlay()}
         <SearchBar
           platform="default"
           placeholder={this.state.searchMethod}
@@ -166,7 +358,7 @@ export default class Search extends React.Component {
           round
           onChangeText={searchInput => this._search(searchInput, this.state.searchMethod)}
           value={this.state.searchInput}
-          onClear={() => {this.setState({ searchResult: []})}}
+          onClear={() => { this.setState({ searchResult: [] }) }}
         />
         <FlatList
           keyExtractor={(item, index) => index.toString()}

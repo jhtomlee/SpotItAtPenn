@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, SafeAreaView, AsyncStorage, FlatList, Linking, View, TouchableWithoutFeedback, ScrollView, Text } from 'react-native';
 import { ListItem, Overlay, Icon } from 'react-native-elements'
 import firebase from 'firebase';
-import { eventsDB } from '../../../src/db'
+import { eventsDB, usersDB } from '../../../src/db'
 import moment from 'moment';
 
 
@@ -15,16 +15,25 @@ export default class Discover extends React.Component {
   }
   constructor(props) {
     super(props);
+    this.likedEvent = new Set();
+    this.likesCounts = {};
     this.state = {
+      userId: null,
       subscribedInterests: [],
       eventsData: [],
+      likedBy: [],
       eventOverlayVisible: false,
       pressedItem: null,
-      pressedItemId: null
+      pressedItemId: null,
+      toggle: false
     };
   }
 
   async componentDidMount() {
+    if (!this.state.userId) {
+      const userId = await AsyncStorage.getItem('userId');
+      this.setState({ userId })
+    }
     if (this.state.subscribedInterests.length === 0) {
       const subscribedInterestsArray = await AsyncStorage.getItem('subscribedInterestsArray');
       const subscribedInterests = JSON.parse(subscribedInterestsArray)
@@ -50,6 +59,21 @@ export default class Discover extends React.Component {
               return a.data().time - b.data().time;
             });
             this.setState({ eventsData })
+
+            //store like counts
+            this.likesCounts[doc.id] = eventElement.data().likesCount
+
+            //store liked events by user
+            const nose = eventElement.data().likedBy
+            if (nose && nose.length > 0) {
+              nose.map((id) => {
+                if (id === this.state.userId) {
+                  this.likedEvent.add(doc.id)
+                  const { toggle } = this.state;
+                  this.setState({ toggle: !toggle });
+                }
+              })
+            }
           });
         })
         .catch(function (error) {
@@ -60,8 +84,9 @@ export default class Discover extends React.Component {
 
   _renderRow = item => {
     const element = item.item.data()
+    const eventId = item.item.id
     const dateString = moment.unix(element.time).format("YYYY-MM-DD HH:mm");
-    
+
     return (
       <ListItem
         title={element.title}
@@ -69,10 +94,59 @@ export default class Discover extends React.Component {
         subtitle={`${element.host}\n${dateString}`}
         subtitleStyle={{ fontSize: 14, color: 'dimgrey' }}
         onPress={() => this._toggleEventDetails(element, item.item.id)}
+        rightIcon={
+          <View style={{flexDirection: 'row'}}>
+            <Icon
+              name={
+                this.likedEvent.has(eventId) ? 'heart' : 'heart-outline'
+              }
+              type="material-community"
+              size={25}
+              iconStyle={
+                this.likedEvent.has(eventId)
+                  ? { color: 'red', }
+                  : { color: '#a9a9a9' }
+              }
+              onPress={() => this._likedAction(this.state.userId, item.item.id)}
+
+            />
+            <Text>  x {this.likesCounts[eventId]}</Text>
+          </View>
+        }
 
       />
     );
   };
+  _likedAction = async (userId, eventId) => {
+    const db = await firebase.firestore();
+    if (!this.likedEvent.has(eventId)) {
+      const increment = firebase.firestore.FieldValue.increment(1);
+      db.collection(eventsDB).doc(eventId).update({
+        likedBy: firebase.firestore.FieldValue.arrayUnion(userId),
+        likesCount: increment
+      }).catch(function (error) {
+        console.log("Error updating document: ", error);
+      });
+      this.likedEvent.add(eventId)
+      const count = this.likesCounts[eventId] 
+      this.likesCounts[eventId] = count + 1;
+    } else {
+    
+      const decrement = firebase.firestore.FieldValue.increment(-1);
+      db.collection(eventsDB).doc(eventId).update({
+        likedBy: firebase.firestore.FieldValue.arrayRemove(userId),
+        likesCount: decrement
+      }).catch(function (error) {
+        console.log("Error updating document: ", error);
+      });
+      this.likedEvent.delete(eventId)
+      const count = this.likesCounts[eventId] 
+      this.likesCounts[eventId] = count - 1;
+    }
+    const { toggle } = this.state;
+    this.setState({ toggle: !toggle });
+
+  }
 
   _toggleEventDetails = (item, id) => {
     const { eventOverlayVisible } = this.state;
@@ -93,10 +167,6 @@ export default class Discover extends React.Component {
       >
 
         {this.state.pressedItem ? (
-
-
-
-
           <ScrollView
             style={{ flex: 1 }}
             showsVerticalScrollIndicator="false"
@@ -129,58 +199,66 @@ export default class Discover extends React.Component {
               <Text>{}</Text>
             </View>
 
-            <View style={{ alignItems: 'center' }}>
+            {this.state.pressedItem.host ?
+              <View style={{ alignItems: 'center' }}>
+                <Text
+                  style={{
+                    color: 'dimgrey',
+                    fontSize: 16,
+                    paddingTop: 0,
+                    paddingBottom: 20,
+                    paddingLeft: 15,
+                    paddingRight: 15,
+                    textAlign: 'justify',
+                  }}
+                >{`${this.state.pressedItem.host}`}</Text>
+              </View>
+              : <View></View>}
+
+            {this.state.pressedItem.time ?
               <Text
                 style={{
-                  color: 'dimgrey',
-                  fontSize: 16,
-                  paddingTop: 0,
-                  paddingBottom: 20,
                   paddingLeft: 15,
-                  paddingRight: 15,
-                  textAlign: 'justify',
+                  paddingRight: 20,
+                  paddingBottom: 20,
+                  fontSize: 14,
+                  color: 'grey',
+                  // textAlign: 'justify',
                 }}
-              >{`${this.state.pressedItem.host}`}</Text>
-            </View>
+              >
+                {`When? \n${moment.unix(this.state.pressedItem.time).format("YYYY-MM-DD HH:mm")}`}
+              </Text>
+              : <View></View>}
 
-            <Text
-              style={{
-                paddingLeft: 15,
-                paddingRight: 20,
-                paddingBottom: 20,
-                fontSize: 14,
-                color: 'grey',
-                // textAlign: 'justify',
-              }}
-            >
-              {`When? \n${ moment.unix(this.state.pressedItem.time).format("YYYY-MM-DD HH:mm")}`}
-            </Text>
+            {this.state.pressedItem.location ?
+              <Text
+                style={{
+                  paddingLeft: 15,
+                  paddingRight: 20,
+                  paddingBottom: 20,
+                  fontSize: 14,
+                  color: 'grey',
+                  // textAlign: 'justify',
+                }}
+              >
+                {`Where? \n${this.state.pressedItem.location}`}
+              </Text>
+              : <View></View>}
 
-            <Text
-              style={{
-                paddingLeft: 15,
-                paddingRight: 20,
-                paddingBottom: 20,
-                fontSize: 14,
-                color: 'grey',
-                // textAlign: 'justify',
-              }}
-            >
-              {`Where? \n${this.state.pressedItem.location}`}
-            </Text>
-
-            <Text
-              style={{
-                paddingLeft: 15,
-                paddingRight: 20,
-                paddingBottom: 20,
-                fontSize: 14,
-                color: 'grey',
-                // textAlign: 'justify',
-              }}
-            >
-              {`What?: \n${this.state.pressedItem.summary}`}
-            </Text>
+            {this.state.pressedItem.summary ?
+              <Text
+                style={{
+                  paddingLeft: 15,
+                  paddingRight: 20,
+                  paddingBottom: 20,
+                  fontSize: 14,
+                  color: 'grey',
+                  // textAlign: 'justify',
+                }}
+              >
+                {`What?: \n${this.state.pressedItem.summary}`}
+              </Text>
+              : <View></View>}
 
             {this.state.pressedItem.cost ?
               <Text
@@ -255,7 +333,6 @@ export default class Discover extends React.Component {
                   </Text>
                 </View>
               </TouchableWithoutFeedback> : <View></View>}
-
 
           </ScrollView>
         ) : (

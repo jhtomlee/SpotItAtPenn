@@ -3,16 +3,12 @@ import { StyleSheet, SafeAreaView, View, Button, Text } from 'react-native';
 import firebase from 'firebase';
 
 export default class Schedule extends React.Component {
-
-    _signout = () => {
-        try {
-            firebase.auth().signOut();
-            this.props.navigation.navigate('Loading');
-        } catch (error) {
-            console.log(error);
-            alert(error.toString());
+    static navigationOptions = ({ navigation }) => {
+        return {
+          headerTitle: "My Schedule",
+          headerTintColor: '#a41034',
         }
-    }
+      }
     render() {
         return (
             <SafeAreaView style={styles.container}>

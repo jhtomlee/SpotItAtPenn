@@ -65,17 +65,17 @@ export const HomeMain = createBottomTabNavigator(
         } else if (routeName === 'SearchStack') {
           iconName = `ios-search`
         } else if (routeName === 'ScheduleStack') {
-          iconName = `ios-contact`
+          iconName = `ios-calendar`
         }
         return <Ionicons name={iconName} size={25} color={tintColor} />
       }
-    })
-  },
-  {
+    }),
+  
     tabBarOptions: {
       showLabel: false,
       activeTintColor: '#a41034',
       inactiveTintColor: 'gray',
     },
   }
+  
 )

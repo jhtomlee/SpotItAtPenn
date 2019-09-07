@@ -10,13 +10,13 @@ export default class Discover extends React.Component {
   static navigationOptions = ({ navigation }) => {
     return {
       headerTitle: "Discover",
-      headerTintColor: '#2bb5bc',
+      headerTintColor: '#a41034',
       headerRight: (
         <Icon containerStyle={{ paddingRight: 14, }}
           name="ios-contact"
           type="ionicon"
           size={25}
-          color="#2bb5bc"
+          color="blue"
           onPress={navigation.getParam('handleHeaderRight')} />
 
       ),
@@ -25,7 +25,7 @@ export default class Discover extends React.Component {
           name="ios-compass"
           type="ionicon"
           size={25}
-          color="#2bb5bc"
+          color="blue"
           onPress={navigation.getParam('handleHeaderLeft')} />
 
       ),

@@ -6,7 +6,7 @@ export default class User extends React.Component {
   static navigationOptions = ({ navigation }) => {
     return {
       headerTitle: "User",
-      headerTintColor: '#2bb5bc',
+      headerTintColor: '#a41034',
     }
   }
 

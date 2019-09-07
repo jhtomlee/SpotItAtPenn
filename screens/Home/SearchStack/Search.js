@@ -9,14 +9,14 @@ export default class Search extends React.Component {
   static navigationOptions = ({ navigation }) => {
     return {
       headerTitle: "Search",
-      headerTintColor: '#2bb5bc',
+      headerTintColor: '#a41034',
       headerRight: (
 
         <Icon containerStyle={{ paddingRight: 14, }}
           name="filter"
           type="material-community"
           size={25}
-          color="#2bb5bc"
+          color="blue"
           onPress={navigation.getParam('handleHeaderRight')} />
 
       ),

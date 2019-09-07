@@ -82,14 +82,14 @@ export default class LogIn extends React.Component {
                 autoCorrect={false}
                 ref={"txtPassword"}
               />
-              <Button title="Forgot Password?" onPress={this._forgot} color='#2bb5bc' />
+              <Button title="Forgot Password?" onPress={this._forgot} color='#a41034' />
               <TouchableOpacity
                 style={styles.bottonContainer}
                 onPress={this._emailSignin}
               >
                 <Text style={styles.bottonText}>SIGN IN</Text>
               </TouchableOpacity>
-              <Button title="I don't have an account" onPress={this._register} color='#2bb5bc' />
+              <Button title="I don't have an account" onPress={this._register} color='#a41034' />
             </View>
           </View>
         </TouchableWithoutFeedback>
@@ -131,12 +131,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   bottonContainer: {
-    backgroundColor: '#2bb5bc',
+    backgroundColor: '#a41034',
     paddingVertical: 15,
     marginBottom: 20,
   },
   botton2Container: {
-    backgroundColor: '#2bb5bc',
+    backgroundColor: '#a41034',
     paddingVertical: 10,
     marginBottom: 10,
   },

@@ -1,19 +1,29 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { createSwitchNavigator, createAppContainer, } from 'react-navigation'
+import * as firebase from 'firebase';
+import {firebaseConfig} from './src/api';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>SpotIt at Penn!</Text>
-    </View>
-  );
-}
+import { LoginMain } from './screens/Login/LoginMain'
+import { HomeMain } from './screens/Home/HomeMain'
+import  LoginLoading  from './screens/LoginLoading'
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+
+//Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+
+//Top main navigator
+const AppNavigator = createSwitchNavigator({
+  Login: LoginMain, 
+  Loading: LoginLoading,
+  Home: HomeMain,   
+}, {
+    initialRouteName: 'Loading',
+  })
+const AppContainer = createAppContainer(AppNavigator)
+
+
+const App = () => (
+  <AppContainer />
+);
+export default App;

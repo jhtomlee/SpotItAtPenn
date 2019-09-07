@@ -6,9 +6,11 @@ import Ionicons from 'react-native-vector-icons/Ionicons'
 import Discover from "./DiscoverStack/Discover";
 import Search from "./SearchStack/Search";
 import Schedule from "./ScheduleStack/Schedule";
+import User from "./DiscoverStack/User";
 
 const DiscoverStack = createStackNavigator({
   Discover: Discover,
+  User: User,
 });
 DiscoverStack.navigationOptions = ({ navigation }) => {
   let tabBarVisible = true;

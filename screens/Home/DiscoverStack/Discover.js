@@ -1,8 +1,8 @@
 import React from 'react';
-import { StyleSheet, SafeAreaView, AsyncStorage, FlatList, Linking, View, TouchableWithoutFeedback, ScrollView, Text } from 'react-native';
+import { StyleSheet, SafeAreaView, AsyncStorage, TouchableOpacity, FlatList, Linking, View, TouchableWithoutFeedback, ScrollView, Text } from 'react-native';
 import { ListItem, Overlay, Icon } from 'react-native-elements'
 import firebase from 'firebase';
-import { eventsDB, usersDB } from '../../../src/db'
+import { eventsDB, usersDB, keywordsDB } from '../../../src/db'
 import moment from 'moment';
 
 
@@ -11,10 +11,29 @@ export default class Discover extends React.Component {
     return {
       headerTitle: "Discover",
       headerTintColor: '#2bb5bc',
+      headerRight: (
+        <Icon containerStyle={{ paddingRight: 14, }}
+          name="ios-contact"
+          type="ionicon"
+          size={25}
+          color="#2bb5bc"
+          onPress={navigation.getParam('handleHeaderRight')} />
+
+      ),
+      headerLeft: (
+        <Icon containerStyle={{ paddingLeft: 14, }}
+          name="ios-compass"
+          type="ionicon"
+          size={25}
+          color="#2bb5bc"
+          onPress={navigation.getParam('handleHeaderLeft')} />
+
+      ),
     }
   }
   constructor(props) {
     super(props);
+    this.selected = new Set();
     this.likedEvent = new Set();
     this.likesCounts = {};
     this.state = {
@@ -22,24 +41,42 @@ export default class Discover extends React.Component {
       subscribedInterests: [],
       eventsData: [],
       likedBy: [],
+
       eventOverlayVisible: false,
       pressedItem: null,
       pressedItemId: null,
-      toggle: false
+      toggle: false,
+
+      interestOverlayVisible: false,
+      interestsData: []
     };
   }
 
   async componentDidMount() {
+    this.props.navigation.setParams({
+      handleHeaderRight: this._navigateUser,
+      handleHeaderLeft: this._navigateInterests,
+    });
     if (!this.state.userId) {
       const userId = await AsyncStorage.getItem('userId');
       this.setState({ userId })
     }
+
     if (this.state.subscribedInterests.length === 0) {
       const subscribedInterestsArray = await AsyncStorage.getItem('subscribedInterestsArray');
       const subscribedInterests = JSON.parse(subscribedInterestsArray)
       this.setState({ subscribedInterests })
     }
     this.fetchEvents();
+    this.fetchInterests();
+  }
+  _navigateUser = () => {
+    // console.warn("hola")
+    this.props.navigation.navigate('User');
+  }
+  _navigateInterests = () => {
+    this.setState({ interestOverlayVisible: true })
+
   }
 
   fetchEvents = async () => {
@@ -80,6 +117,28 @@ export default class Discover extends React.Component {
           console.warn("Error getting documents: ", error);
         });
     })
+  }
+  fetchInterests = async () => {
+    const db = await firebase.firestore();
+    const doc = await db.collection(keywordsDB).doc('keywords').get();
+    const {
+      keywords
+    } = doc.data();
+    keywords.sort();
+    this.setState({ interestsData: keywords })
+
+    const doc2 = await db.collection(usersDB).doc(this.state.userId).get();
+    const {
+      subscribedInterests
+    } = doc2.data();
+    this.setState({ subscribedInterests })
+
+    subscribedInterests.map((item) => {
+      this.selected.add(item)
+      const { toggle } = this.state;
+      this.setState({ toggle: !toggle });
+    })
+
   }
 
   _likedAction = async (userId, eventId) => {
@@ -133,6 +192,63 @@ export default class Discover extends React.Component {
     this.setState({ pressedItem: item });
     this.setState({ pressedItemId: id });
   };
+  _continue = async () => {
+    this.setState({ eventsData: [] })
+
+    const arr = Array.from(this.selected);
+    const db = firebase.firestore();
+    const userId = await AsyncStorage.getItem('userId');
+    db.collection(usersDB)
+      .doc(userId)
+      .update({
+        subscribedInterests: arr,
+      })
+      .catch(function (error) {
+        throw new Error('Error updating document: ', error);
+      });
+
+    
+
+    const eventsRef = await db.collection(eventsDB);
+    //refetch
+    arr.map(async (interest) => {
+
+      const query = await eventsRef.where("keywords", "array-contains", interest)
+      query
+        .get()
+        .then((querySnapshot) => {
+          querySnapshot.forEach((doc) => {
+            const eventElement = doc;
+            const eventsData = this.state.eventsData;
+            eventsData.push(eventElement)
+            eventsData.sort((a, b) => {
+              return a.data().time - b.data().time;
+            });
+            this.setState({ eventsData })
+
+            //store like counts
+            this.likesCounts[doc.id] = eventElement.data().likesCount
+
+            //store liked events by user
+            const nose = eventElement.data().likedBy
+            if (nose && nose.length > 0) {
+              nose.map((id) => {
+                if (id === this.state.userId) {
+                  this.likedEvent.add(doc.id)
+                  const { toggle } = this.state;
+                  this.setState({ toggle: !toggle });
+                }
+              })
+            }
+          });
+        })
+        .catch(function (error) {
+          console.warn("Error getting documents: ", error);
+        });
+    })
+
+    this.setState({ interestOverlayVisible: false })
+  }
 
 
 
@@ -140,6 +256,39 @@ export default class Discover extends React.Component {
   /**
    * Render
    */
+  renderInterestOverlay = () => {
+    return (
+      <Overlay
+        isVisible={this.state.interestOverlayVisible}
+        onBackdropPress={() => this.setState({ interestOverlayVisible: false })}>
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              paddingTop: 30,
+              color: 'black',
+              fontWeight: 'bold',
+              fontSize: 18,
+            }}
+          >My Interests</Text>
+          <FlatList
+            keyExtractor={(item, index) => index.toString()}
+            data={this.state.interestsData}
+            renderItem={this._renderInterestRow}
+            extraData={this.state}
+          />
+          <TouchableOpacity
+            style={styles.bottonContainer}
+            onPress={this._continue}
+          >
+            <Text style={styles.bottonText}>START SPOTIT</Text>
+          </TouchableOpacity>
+        </View>
+
+
+      </Overlay>
+    )
+
+  }
   renderEventOverlay = () => {
     return (
       <Overlay
@@ -154,7 +303,7 @@ export default class Discover extends React.Component {
             showsVerticalScrollIndicator="false"
           >
 
-            <View style={{ flexDirection: 'row',alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <TouchableWithoutFeedback
                 onPress={() => {
                   this.setState({ eventOverlayVisible: false })
@@ -168,17 +317,17 @@ export default class Discover extends React.Component {
                   color="#2bb5bc"
                 />
               </TouchableWithoutFeedback>
-              <View style ={{paddingRight: 20}}>
-              <Text
-                style={{
-                  paddingTop: 30,
-                  color: 'black',
-                  fontWeight: 'bold',
-                  fontSize: 18,
-                }}
-              >
-                {this.state.pressedItem.title}
-              </Text>
+              <View style={{ paddingRight: 20 }}>
+                <Text
+                  style={{
+                    paddingTop: 30,
+                    color: 'black',
+                    fontWeight: 'bold',
+                    fontSize: 18,
+                  }}
+                >
+                  {this.state.pressedItem.title}
+                </Text>
               </View>
               <Text>    </Text>
             </View>
@@ -372,9 +521,39 @@ export default class Discover extends React.Component {
       />
     );
   };
+  _renderInterestRow = item => {
+    const interest = item.item;
+    return (
+      <ListItem
+        containerStyle={{ backgroundColor: '#e8e8e8' }}
+        title={interest}
+        onPress={() => {
+          {
+            this.selected.has(interest)
+              ? this.selected.delete(interest)
+              : this.selected.add(interest);
+          }
+          const { toggle } = this.state;
+          this.setState({ toggle: !toggle });
+        }}
+        containerStyle={
+          this.selected.has(interest)
+            ? { backgroundColor: 'dimgrey', borderRadius: 5 }
+            : { backgroundColor: '#e8e8e8' }
+        }
+        titleStyle={
+          this.selected.has(interest)
+            ? { fontSize: 14, color: 'white' }
+            : { fontSize: 14, color: 'dimgrey' }
+        }
+      />
+    );
+
+  }
   render() {
     return (
       <SafeAreaView style={styles.container}>
+        {this.renderInterestOverlay()}
         {this.renderEventOverlay()}
         <FlatList
           keyExtractor={(item, index) => index.toString()}
@@ -395,5 +574,16 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'center',
   },
+  bottonContainer: {
+    backgroundColor: '#2bb5bc',
+    paddingVertical: 15,
+    marginTop: 20,
+  },
+  bottonText: {
+    textAlign: 'center',
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 18,
+  }
 
 })

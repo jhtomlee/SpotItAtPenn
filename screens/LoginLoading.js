@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, StyleSheet, ActivityIndicator, AsyncStorage } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, AsyncStorage,Alert } from 'react-native';
 import { StackActions, NavigationActions } from 'react-navigation';
 import firebase from 'firebase';
 import {usersDB} from '../src/db'
@@ -15,7 +15,30 @@ export default class LoginLoadingScreen extends Component {
   checkIfLoggedIn = async () => {
     this.unsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
 
-      if (user) {
+      if (user &&(!user.emailVerified)){
+        Alert.alert(
+          'Email needs to be verified',
+          'Press "Ok" to receive a verification email',
+          [
+            {
+              text: 'Ok',
+              onPress: async () => {
+                await user.sendEmailVerification();
+                await firebase.auth().signOut();
+                this.props.navigation.navigate('LoginMain');
+              },
+            },
+            {
+              text: 'Cancel',
+              onPress: async () => {
+                await firebase.auth().signOut();
+                this.props.navigation.navigate('LoginMain');
+              },
+            },
+          ],
+          { cancelable: false }
+        );
+      } else if (user) {
         const userId = user.uid;
         await AsyncStorage.setItem('userId', userId);
 

@@ -1,13 +1,14 @@
 import React from 'react'
-import { View, Text, TextInput, TouchableWithoutFeedback, TouchableOpacity, Keyboard, StyleSheet } from 'react-native'
+import { Alert, View, Text, TextInput, TouchableWithoutFeedback, TouchableOpacity, Keyboard, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-navigation';
+import firebase from 'firebase';
 
 
 export default class ForgotPasswordScreen extends React.Component {
     static navigationOptions = ({ navigation }) => {
         return {
             headerTitle: "Forgot Password",
-            headerTintColor: '#2bb5bc', 
+            headerTintColor: '#2bb5bc',
             headerStyle: {
                 backgroundColor: '#e8e8e8',
                 height: 100,
@@ -17,15 +18,34 @@ export default class ForgotPasswordScreen extends React.Component {
     }
     state = {
         email: '',
+        emailSent: false,
     }
 
     _emailUpdate = email => {
         this.setState({ email })
     }
 
-    _emailMe = () =>{
+    _emailMe = async () => {
+        const email = this.state.email;
+        if (email) {
+            try {
+                await firebase.auth().sendPasswordResetEmail(email);
+                this.setState({ emailSent: true });
+                Alert.alert(
+                    'Success',
+                    'Check your email to reset your password!',
+                    [{ text: 'Ok', onPress: () => this.props.navigation.goBack(null) }],
+                    { cancelable: false }
+                );
+            } catch (error) {
+                alert(error);
+            }
+        } else {
+            alert('Please enter your email');
+        }
+    };
 
-    }
+
 
     render() {
         return (

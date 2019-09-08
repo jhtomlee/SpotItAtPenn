@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, Image, ScrollView, TextInput, FlatList, AsyncStorage, Alert, TouchableOpacity, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from 'react-native'
-import { ListItem } from 'react-native-elements'
+import { ListItem, Button } from 'react-native-elements'
 import firebase from 'firebase';
 import { usersDB, eventsDB } from '../../../src/db'
+import DateTimePicker from "react-native-modal-datetime-picker";
 
 export default class Create extends React.Component {
   static navigationOptions = ({ navigation }) => {
@@ -25,7 +26,9 @@ export default class Create extends React.Component {
       registrationSite: null,
       websiteSource: null,
       keyWords: [],
-      keywordList: ['Social', 'Food', 'Sports', 'Academic', 'Student Organization']
+      keywordList: ['Social', 'Food', 'Sports', 'Academic', 'Student Organization'],
+
+      isDateTimePickerVisible: false
     };
   }
 
@@ -33,6 +36,23 @@ export default class Create extends React.Component {
     const preferredName = await AsyncStorage.getItem('preferredName');
     this.setState({ host: preferredName })
   }
+
+  showDateTimePicker = () => {
+    this.setState({ isDateTimePickerVisible: true });
+  };
+
+  hideDateTimePicker = () => {
+    this.setState({ isDateTimePickerVisible: false });
+  };
+
+  handleDatePicked = date => {
+    // console.warn("A date has been picked: ", date);
+    // console.warn("A date has been picked: ", typeof date);
+    const ts = Math.round(date.getTime() / 1000);
+    // console.warn(ts)
+    this.setState({time:ts.toString() })
+    this.hideDateTimePicker();
+  };
 
   //state updates
   title = title => {
@@ -164,22 +184,6 @@ export default class Create extends React.Component {
                 />
                 <TextInput
                   style={styles.textinput}
-                  placeholder="Host"
-                  returnKeyType='next'
-                  autoCorrect={false}
-                  value={this.state.host}
-                // onChangeText={this.host}
-                />
-                <TextInput
-                  style={styles.textinput}
-                  placeholder="Time"
-                  returnKeyType='next'
-                  autoCorrect={false}
-                  value={this.state.time}
-                  onChangeText={this.time}
-                />
-                <TextInput
-                  style={styles.textinput}
                   placeholder="Location"
                   returnKeyType='next'
                   autoCorrect={false}
@@ -216,6 +220,18 @@ export default class Create extends React.Component {
                   value={this.state.websiteSource}
                   onChangeText={this.websiteSource}
                 />
+                <Button
+                  containerStyle={{
+                    height: 40,
+                    backgroundColor: '#f2f3f4',
+                    marginBottom: 20,
+                  }}
+                  type="outline"
+                  title="Time"
+                  onPress={() => {
+                    this.showDateTimePicker()
+                  }}
+                />
                 <View stye={{ marginTop: 20, }}>
                   <Text>Select Event Type: </Text>
                   <FlatList
@@ -225,6 +241,13 @@ export default class Create extends React.Component {
                     extraData={this.state}
                   />
                 </View>
+
+                <DateTimePicker
+                  isVisible={this.state.isDateTimePickerVisible}
+                  onConfirm={this.handleDatePicked}
+                  onCancel={this.hideDateTimePicker}
+                  mode='datetime'
+                />
 
 
 

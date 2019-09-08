@@ -295,7 +295,7 @@ export default class Schedule extends React.Component {
                   containerStyle={{ paddingTop: 30, }}
                   name="chevron-left"
                   size={32}
-                  color="#2bb5bc"
+                  color="#a41034"
                 />
               </TouchableWithoutFeedback>
               <View style={{ paddingRight: 30 }}>

@@ -335,7 +335,7 @@ export default class Discover extends React.Component {
                   containerStyle={{ paddingTop: 30, }}
                   name="chevron-left"
                   size={32}
-                  color="#2bb5bc"
+                  color="#a41034"
                 />
               </TouchableWithoutFeedback>
               <View style={{ paddingRight: 20 }}>
@@ -546,7 +546,6 @@ export default class Discover extends React.Component {
     const interest = item.item;
     return (
       <ListItem
-        containerStyle={{ backgroundColor: '#e8e8e8' }}
         title={interest}
         onPress={() => {
           {
@@ -560,7 +559,7 @@ export default class Discover extends React.Component {
         containerStyle={
           this.selected.has(interest)
             ? { backgroundColor: 'blue', borderRadius: 5 }
-            : { backgroundColor: '#e8e8e8' }
+            : { backgroundColor: 'white' }
         }
         titleStyle={
           this.selected.has(interest)

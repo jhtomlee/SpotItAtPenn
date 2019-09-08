@@ -56,9 +56,9 @@ export default class LogIn extends React.Component {
         <TouchableWithoutFeedback style={styles.container} onPress={Keyboard.dismiss} >
           <View style={styles.container}>
             <View style={styles.logoContainer}>
-              {/* <Image style={styles.logo}
-                source={require('../../assets/logo_trans.png')}>
-              </Image> */}
+              <Image style={styles.logo}
+                source={require('../../src/sPOTiT.png')}>
+              </Image>
             </View>
             <View style={styles.loginInfo}>
               <TextInput

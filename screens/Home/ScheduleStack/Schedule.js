@@ -20,10 +20,9 @@ export default class Schedule extends React.Component {
     this.state = {
       userId: null,
       eventsData: [],
-      //delete - Swipeout component
-      activeRowKey: null,
-      //event overlay
-      eventOverlayVisible: false,
+      refreshing: false,
+      activeRowKey: null, //delete - Swipeout component
+      eventOverlayVisible: false, //event overlay
       pressedItem: null,
       pressedItemId: null,
       erased: null
@@ -53,10 +52,9 @@ export default class Schedule extends React.Component {
       });
       this.setState({ eventsData })
     })
+    this.setState({refreshing:false})
   }
   _deleteEvent = async (eventId) => {
-    console.warn("delete!")
-
 
     const newData = this.state.eventsData.filter(item => {
       const itemData = item.id;
@@ -73,7 +71,7 @@ export default class Schedule extends React.Component {
     }).catch(function (error) {
       console.log("Error updating document: ", error);
     });
-    
+
     //userDB
     db.collection(usersDB).doc(this.state.userId).update({
       likedEvents: firebase.firestore.FieldValue.arrayRemove(eventId),
@@ -154,10 +152,10 @@ export default class Schedule extends React.Component {
       //erase from local array
       const newData = this.state.eventsData.filter(item => {
         const itemData = item.id;
-        if (itemData.indexOf(eventId) === -1){
+        if (itemData.indexOf(eventId) === -1) {
           return true;
-        }else {
-          this.setState({erased: item})
+        } else {
+          this.setState({ erased: item })
           return false;
         }
       });
@@ -186,6 +184,14 @@ export default class Schedule extends React.Component {
     this.setState({ toggle: !toggle });
 
   }
+  _handleRefresh = async () => {
+    this.setState({eventsData: []})
+    this.likedEvent = new Set();
+    this.likesCounts = {};
+    this.setState({ refreshing: true}, async () => {
+      await this.fetchMyEvents();
+    });
+  };
 
   /**
    * Render
@@ -217,7 +223,7 @@ export default class Schedule extends React.Component {
           titleStyle={{ fontSize: 16, color: 'black' }}
           subtitle={`${element.host}\n${dateString}`}
           subtitleStyle={{ fontSize: 14, color: 'dimgrey' }}
-        onPress={() => this._toggleEventDetails(element, item.item.id)}
+          onPress={() => this._toggleEventDetails(element, item.item.id)}
 
         />
       </Swipeout>
@@ -404,7 +410,7 @@ export default class Schedule extends React.Component {
                 </View>
               </TouchableWithoutFeedback> : <View></View>}
 
-            <View style={{ justifyContent: 'center',alignItems: 'center',flexDirection: 'row' }}>
+            <View style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }}>
               <Icon
                 name={
                   this.likedEvent.has(this.state.pressedItemId) ? 'heart' : 'heart-outline'
@@ -436,6 +442,8 @@ export default class Schedule extends React.Component {
           data={this.state.eventsData}
           renderItem={this._renderRow}
           extraData={this.state}
+          refreshing={this.state.refreshing}
+          onRefresh={this._handleRefresh}
         />
 
       </SafeAreaView>

@@ -41,6 +41,7 @@ export default class Discover extends React.Component {
       subscribedInterests: [],
       eventsData: [],
       likedBy: [],
+      refreshing: false,
 
       eventOverlayVisible: false,
       pressedItem: null,
@@ -99,6 +100,8 @@ export default class Discover extends React.Component {
 
             //store like counts
             this.likesCounts[doc.id] = eventElement.data().likesCount
+            const { toggle } = this.state;
+            this.setState({ toggle: !toggle });
 
             //store liked events by user
             const nose = eventElement.data().likedBy
@@ -117,6 +120,7 @@ export default class Discover extends React.Component {
           console.warn("Error getting documents: ", error);
         });
     })
+    this.setState({ refreshing: false })
   }
   fetchInterests = async () => {
     const db = await firebase.firestore();
@@ -207,7 +211,7 @@ export default class Discover extends React.Component {
         throw new Error('Error updating document: ', error);
       });
 
-    
+
 
     const eventsRef = await db.collection(eventsDB);
     //refetch
@@ -249,6 +253,14 @@ export default class Discover extends React.Component {
 
     this.setState({ interestOverlayVisible: false })
   }
+  _handleRefresh = async () => {
+    this.setState({ eventsData: [] })
+    this.likedEvent = new Set();
+    this.likesCounts = {};
+    this.setState({ refreshing: true }, async () => {
+      await this.fetchEvents();
+    });
+  };
 
 
 
@@ -560,6 +572,8 @@ export default class Discover extends React.Component {
           data={this.state.eventsData}
           renderItem={this._renderRow}
           extraData={this.state}
+          refreshing={this.state.refreshing}
+          onRefresh={this._handleRefresh}
         />
       </SafeAreaView>
     )

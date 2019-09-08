@@ -6,11 +6,11 @@ import Ionicons from 'react-native-vector-icons/Ionicons'
 import Discover from "./DiscoverStack/Discover";
 import Search from "./SearchStack/Search";
 import Schedule from "./ScheduleStack/Schedule";
-import User from "./DiscoverStack/User";
+import Create from "./DiscoverStack/Create";
 
 const DiscoverStack = createStackNavigator({
   Discover: Discover,
-  User: User,
+  Create: Create,
 });
 DiscoverStack.navigationOptions = ({ navigation }) => {
   let tabBarVisible = true;
@@ -51,8 +51,9 @@ ScheduleStack.navigationOptions = ({ navigation }) => {
 
 export const HomeMain = createBottomTabNavigator(
   {
-    DiscoverStack: DiscoverStack,
+    
     SearchStack: SearchStack,
+    DiscoverStack: DiscoverStack,
     ScheduleStack: ScheduleStack,
   },
   {
@@ -76,6 +77,7 @@ export const HomeMain = createBottomTabNavigator(
       activeTintColor: '#a41034',
       inactiveTintColor: 'gray',
     },
+    initialRouteName: 'DiscoverStack',
   }
   
 )

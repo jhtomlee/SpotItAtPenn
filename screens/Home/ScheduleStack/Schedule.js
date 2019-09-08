@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, SafeAreaView, View, AsyncStorage, Text, FlatList, TouchableWithoutFeedback, ScrollView, Linking } from 'react-native'
+import { StyleSheet, SafeAreaView, View, AsyncStorage, Text, Alert, FlatList, TouchableWithoutFeedback, ScrollView, Linking } from 'react-native'
 import { ListItem, Overlay, Icon } from 'react-native-elements'
 import { eventsDB, usersDB, keywordsDB } from '../../../src/db'
 import firebase from 'firebase';
@@ -11,6 +11,15 @@ export default class Schedule extends React.Component {
     return {
       headerTitle: "My Schedule",
       headerTintColor: '#a41034',
+      headerRight: (
+        <Icon containerStyle={{ paddingRight: 14, }}
+          name="logout"
+          type="material-community"
+          size={25}
+          color="blue"
+          onPress={navigation.getParam('handleHeaderRight')} />
+
+      ),
     }
   }
   constructor(props) {
@@ -33,10 +42,39 @@ export default class Schedule extends React.Component {
     if (!this.state.userId) {
       this.setState({ userId })
     }
+    this.props.navigation.setParams({
+      handleHeaderRight: this._logout,
+    });
 
     await this.fetchMyEvents();
 
-
+  }
+  _logout = () => {
+    Alert.alert(
+      'Would you like to logout?',
+      'Press "Ok" to return to the login screen',
+      [
+        {
+          text: 'Ok',
+          onPress: async () => {
+            try {
+              firebase.auth().signOut();
+              this.props.navigation.navigate('Loading');
+            } catch (error) {
+              console.log(error);
+              alert(error.toString());
+            }
+          },
+        },
+        {
+          text: 'Cancel',
+          onPress: async () => {
+            console.log('logout cancelled')
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   }
   fetchMyEvents = async () => {
     const db = await firebase.firestore();
@@ -52,7 +90,7 @@ export default class Schedule extends React.Component {
       });
       this.setState({ eventsData })
     })
-    this.setState({refreshing:false})
+    this.setState({ refreshing: false })
   }
   _deleteEvent = async (eventId) => {
 
@@ -185,10 +223,10 @@ export default class Schedule extends React.Component {
 
   }
   _handleRefresh = async () => {
-    this.setState({eventsData: []})
+    this.setState({ eventsData: [] })
     this.likedEvent = new Set();
     this.likesCounts = {};
-    this.setState({ refreshing: true}, async () => {
+    this.setState({ refreshing: true }, async () => {
       await this.fetchMyEvents();
     });
   };

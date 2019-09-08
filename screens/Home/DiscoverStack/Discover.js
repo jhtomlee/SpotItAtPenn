@@ -13,8 +13,8 @@ export default class Discover extends React.Component {
       headerTintColor: '#a41034',
       headerRight: (
         <Icon containerStyle={{ paddingRight: 14, }}
-          name="ios-contact"
-          type="ionicon"
+          name="folder-plus"
+          type="material-community"
           size={25}
           color="blue"
           onPress={navigation.getParam('handleHeaderRight')} />
@@ -55,7 +55,7 @@ export default class Discover extends React.Component {
 
   async componentDidMount() {
     this.props.navigation.setParams({
-      handleHeaderRight: this._navigateUser,
+      handleHeaderRight: this._createEvent,
       handleHeaderLeft: this._navigateInterests,
     });
     if (!this.state.userId) {
@@ -71,9 +71,9 @@ export default class Discover extends React.Component {
     this.fetchEvents();
     this.fetchInterests();
   }
-  _navigateUser = () => {
+  _createEvent = () => {
     // console.warn("hola")
-    this.props.navigation.navigate('User');
+    this.props.navigation.navigate('Create');
   }
   _navigateInterests = () => {
     this.setState({ interestOverlayVisible: true })
@@ -272,12 +272,13 @@ export default class Discover extends React.Component {
     return (
       <Overlay
         isVisible={this.state.interestOverlayVisible}
-        onBackdropPress={() => this.setState({ interestOverlayVisible: false })}>
+        onBackdropPress={() => this.setState({ interestOverlayVisible: false })}
+        height={400}>
         <View style={{ flex: 1 }}>
           <Text
             style={{
-              paddingTop: 30,
-              color: 'black',
+              paddingTop: 10,
+              color: '#a41034',
               fontWeight: 'bold',
               fontSize: 18,
             }}
@@ -550,7 +551,7 @@ export default class Discover extends React.Component {
         }}
         containerStyle={
           this.selected.has(interest)
-            ? { backgroundColor: 'dimgrey', borderRadius: 5 }
+            ? { backgroundColor: 'blue', borderRadius: 5 }
             : { backgroundColor: '#e8e8e8' }
         }
         titleStyle={
@@ -589,7 +590,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bottonContainer: {
-    backgroundColor: '#2bb5bc',
+    backgroundColor: '#a41034',
     paddingVertical: 15,
     marginTop: 20,
   },

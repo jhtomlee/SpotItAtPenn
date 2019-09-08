@@ -223,7 +223,7 @@ export default class Search extends React.Component {
             <Text
               style={{
                 paddingTop: 30,
-                color: 'black',
+                color: '#a41034',
                 fontWeight: 'bold',
                 fontSize: 18,
               }}

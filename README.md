@@ -1,4 +1,4 @@
-# SpotItAtPenn
+# SpotItAtPenn (PennApps XX Hackathon)
 
 ## Inspiration 
 There are numerous events on campus organized by a wide range of groups. Presently, we get bombarded with announcements of events we are not interested but still struggle to find the events that matter to us. 

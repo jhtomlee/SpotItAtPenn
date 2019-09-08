@@ -8,7 +8,7 @@ export default class ForgotPasswordScreen extends React.Component {
     static navigationOptions = ({ navigation }) => {
         return {
             headerTitle: "Forgot Password",
-            headerTintColor: '#2bb5bc',
+            headerTintColor: '#a41034',
             headerStyle: {
                 backgroundColor: '#e8e8e8',
                 height: 100,
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     button: {
-        backgroundColor: '#2bb5bc',
+        backgroundColor: '#a41034',
         paddingVertical: 15,
         marginBottom: 20,
     },

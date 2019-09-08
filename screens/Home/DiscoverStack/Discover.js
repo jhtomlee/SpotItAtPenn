@@ -33,6 +33,7 @@ export default class Discover extends React.Component {
   }
   constructor(props) {
     super(props);
+    this.eventsDataId = new Set();
     this.selected = new Set();
     this.likedEvent = new Set();
     this.likesCounts = {};
@@ -90,30 +91,35 @@ export default class Discover extends React.Component {
         .get()
         .then((querySnapshot) => {
           querySnapshot.forEach((doc) => {
-            const eventElement = doc;
-            const eventsData = this.state.eventsData;
-            eventsData.push(eventElement)
-            eventsData.sort((a, b) => {
-              return a.data().time - b.data().time;
-            });
-            this.setState({ eventsData })
+            if (!this.eventsDataId.has(doc.id)) {
+              this.eventsDataId.add(doc.id)
+              const eventElement = doc;
+              const eventsData = this.state.eventsData;
+              eventsData.push(eventElement)
+              eventsData.sort((a, b) => {
+                return a.data().time - b.data().time;
+              });
+              this.setState({ eventsData })
+              //store like counts
+              this.likesCounts[doc.id] = eventElement.data().likesCount
+              const { toggle } = this.state;
+              this.setState({ toggle: !toggle });
 
-            //store like counts
-            this.likesCounts[doc.id] = eventElement.data().likesCount
-            const { toggle } = this.state;
-            this.setState({ toggle: !toggle });
-
-            //store liked events by user
-            const nose = eventElement.data().likedBy
-            if (nose && nose.length > 0) {
-              nose.map((id) => {
-                if (id === this.state.userId) {
-                  this.likedEvent.add(doc.id)
-                  const { toggle } = this.state;
-                  this.setState({ toggle: !toggle });
-                }
-              })
+              //store liked events by user
+              const nose = eventElement.data().likedBy
+              if (nose && nose.length > 0) {
+                nose.map((id) => {
+                  if (id === this.state.userId) {
+                    this.likedEvent.add(doc.id)
+                    const { toggle } = this.state;
+                    this.setState({ toggle: !toggle });
+                  }
+                })
+              }
             }
+
+
+
           });
         })
         .catch(function (error) {
@@ -200,6 +206,7 @@ export default class Discover extends React.Component {
     this.setState({ eventsData: [] })
 
     const arr = Array.from(this.selected);
+    this.setState({ subscribedInterests: arr })
     const db = firebase.firestore();
     const userId = await AsyncStorage.getItem('userId');
     db.collection(usersDB)
@@ -256,6 +263,7 @@ export default class Discover extends React.Component {
   _handleRefresh = async () => {
     this.setState({ eventsData: [] })
     this.likedEvent = new Set();
+    this.eventsDataId = new Set();
     this.likesCounts = {};
     this.setState({ refreshing: true }, async () => {
       await this.fetchEvents();
@@ -434,7 +442,7 @@ export default class Discover extends React.Component {
                       fontSize: 14,
                       color: 'grey',
                     }}
-                  >Website:
+                  >Registration:
                 </Text>
                   <Text
                     style={{

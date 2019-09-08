@@ -81,15 +81,17 @@ export default class Schedule extends React.Component {
     const doc = await db.collection(usersDB).doc(this.state.userId).get();
     const eventIds = doc.data().likedEvents;
 
-    eventIds.map(async eventId => {
-      const eventElement = await db.collection(eventsDB).doc(eventId).get();
-      const eventsData = this.state.eventsData;
-      eventsData.push(eventElement)
-      eventsData.sort((a, b) => {
-        return a.data().time - b.data().time;
-      });
-      this.setState({ eventsData })
-    })
+    if (eventIds) {
+      eventIds.map(async eventId => {
+        const eventElement = await db.collection(eventsDB).doc(eventId).get();
+        const eventsData = this.state.eventsData;
+        eventsData.push(eventElement)
+        eventsData.sort((a, b) => {
+          return a.data().time - b.data().time;
+        });
+        this.setState({ eventsData })
+      })
+    }
     this.setState({ refreshing: false })
   }
   _deleteEvent = async (eventId) => {
@@ -402,7 +404,7 @@ export default class Schedule extends React.Component {
                       fontSize: 14,
                       color: 'grey',
                     }}
-                  >Website:
+                  >Registration:
                 </Text>
                   <Text
                     style={{

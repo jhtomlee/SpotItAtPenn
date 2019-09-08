@@ -45,11 +45,12 @@ export default class LoginLoadingScreen extends Component {
         const db = await firebase.firestore();
         const doc = await db.collection(usersDB).doc(userId).get();
         const {
-          subscribedInterests
+          subscribedInterests,
+          preferredName
         } = doc.data();
+        await AsyncStorage.setItem('preferredName', preferredName);
 
         if (subscribedInterests.length === 0){
-          console.warn(0);
           const resetAction = StackActions.reset({
             index: 0,
             actions: [

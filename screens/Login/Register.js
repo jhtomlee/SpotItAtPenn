@@ -2,6 +2,7 @@ import React from 'react'
 import { View, Text, Image, ScrollView, TextInput, Button, TouchableOpacity, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from 'react-native'
 import { SafeAreaView } from 'react-navigation';
 import * as firebase from 'firebase';
+import {usersDB} from '../../src/db'
 import 'firebase/firestore';
 
 
@@ -9,7 +10,7 @@ export default class RegisterScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
     return {
       headerTitle: 'Registration',
-      headerTintColor: '#2bb5bc',
+      headerTintColor: '#a41034',
       headerStyle: {
         backgroundColor: '#e8e8e8',
         height: 100,
@@ -41,7 +42,7 @@ export default class RegisterScreen extends React.Component {
 
       // create data database
       const db = await firebase.firestore();
-      db.collection("users").doc(userData.user.uid).set({
+      db.collection(usersDB).doc(userData.user.uid).set({
         firstName: this.state.firstName,
         lastName: this.state.lastName,
         preferredName: this.state.preferredName,
@@ -49,6 +50,7 @@ export default class RegisterScreen extends React.Component {
         profilePictureURL: null,
         created_at: Date.now(),
         subscribedInterests: [],
+        likedEvents:[],
       }).catch(function (error) {
         console.log("Error adding document: ", error);
       });
@@ -167,7 +169,7 @@ export default class RegisterScreen extends React.Component {
                 >
                   <Text style={styles.bottonText}>SIGN UP</Text>
                 </TouchableOpacity>
-                <Button title="Have an account?" onPress={this._signin} color='#2bb5bc' />
+                <Button title="Have an account?" onPress={this._signin} color='#a41034' />
               </View>
             </View>
           </TouchableWithoutFeedback>
@@ -192,7 +194,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   bottonContainer: {
-    backgroundColor: '#2bb5bc',
+    backgroundColor: '#a41034',
     paddingVertical: 15,
     marginTop: 20,
     marginBottom: 20,

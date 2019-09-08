@@ -381,7 +381,7 @@ export default class Search extends React.Component {
                       fontSize: 14,
                       color: 'grey',
                     }}
-                  >Website:
+                  >Registration:
                 </Text>
                   <Text
                     style={{

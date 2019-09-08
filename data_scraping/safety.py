@@ -74,23 +74,11 @@ class EventsSpider(scrapy.Spider):
             time = None #Updated later
             raw_events_data = event.css('span ::text').getall()
             location = raw_events_data[-1]
+            summary = None #Update Later
             cost = None
             websiteSource = event.css("a ::attr(href)").getall()[0]
-            #Process to determine registation site
-            page = requests.get(websiteSource)
-
-            soup = BeautifulSoup(page.content, 'html.parser')
-
-            links_with_text = [a['href'] for a in soup.find_all('a', href=True) if a.text=='Click here to attend']
-
-            registrationSite = links_with_text[0]
-            #Process to determine summary
-            raw_summary = ''
-            for p in soup.find_all('div','entry-content'):
-                raw_summary= "\n" + (p.text)
-            summary = raw_summary
-
-
+            #Process
+            registrationSite = event.css("a ::attr(href)").getall()[1]
             keywords = []
             # print(title)
             start_time_hours = raw_events_data[1].split(" ")[0]
@@ -138,28 +126,24 @@ class EventsSpider(scrapy.Spider):
             time = int(((date_object - dt.datetime(1970,1,1)).total_seconds()+(4*60*60)))
             #Place to check and add
             unique_list_marker.append(time)
-            print(title)
-            print(registrationSite)
-            print(summary)
             if unique_list_marker in current_data_markers:
                 print("Already Present")
             else:
-                print("New! Printing the following: ")
-                print(unique_list_marker)
-                # BEWARE: This WRITES INTO THE FIREBASE DATASET
-                doc_ref = db.collection(u'events').document()
-                doc_ref.set({
-                    u'title' : title ,
-                    u'host' : host ,
-                    u'time' : time,
-                    u'location' : location ,
-                    u'summary' : summary ,
-                    u'cost' : cost,
-                    u'registrationSite' :  registrationSite,
-                    u'websiteSource': websiteSource,
-                    u'keywords': keywords ,
-                    u'likesCount': 0
-                })
+                print("New!")
+                #Put for launch
+                # doc_ref = db.collection(u'events').document()
+                # doc_ref.set({
+                #     u'title' : title ,
+                #     u'host' : host ,
+                #     u'time' : time,
+                #     u'location' : location ,
+                #     u'summary' : summary ,
+                #     u'cost' : cost,
+                #     u'registrationSite' :  registrationSite,
+                #     u'websiteSource': websiteSource,
+                #     u'keywords': keywords ,
+                #     u'likesCount': 0
+                # })
 
 
 
